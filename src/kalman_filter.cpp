@@ -1,9 +1,16 @@
 #include "kalman_filter.h"
+#include "Eigen/Dense"
+#include <iostream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using namespace std;
 
-KalmanFilter::KalmanFilter() {}
+
+KalmanFilter::KalmanFilter() {
+  // Process covariance: Just allocating. Contents will change with each measurement.
+  Q_ = MatrixXd(4,4);
+}
 
 KalmanFilter::~KalmanFilter() {}
 
@@ -18,22 +25,87 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-  /**
-  TODO:
-    * predict the state
-  */
+  x_ = F_ * x_;
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Kalman Filter equations
-  */
+  VectorXd z_pred = H_ * x_;
+  VectorXd y = z - z_pred;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd K = PHt * Si;
+
+  cout << "z:" << endl << z << endl << endl;
+  cout << "z_pred:" << endl << z_pred << endl << endl;
+  cout << "y:" << endl << y << endl << endl;
+
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Extended Kalman Filter equations
-  */
+  double z_ro = z[0];
+  double z_theta = z[1];
+  double z_ro_dot = z[2];
+
+  if(z[0] < 0.001) {
+    cout << "Skipping radar measurement with very small ro because theta and ro_dot will not be well-defined" << endl;
+    return;
+  }
+
+  double px = x_[0];
+  double py = x_[1];
+  double vx = x_[2];
+  double vy = x_[3];
+
+  double pxy = pow(px,2) + pow(py,2);
+  double pxy_sqrt = pow(pxy,0.5);
+
+  if(pxy < 0.00001) {
+    cout << "State too close to 0,0 for comparison to radar measurement. Re-initializing to radar measurement." << endl;
+    x_[0] = z_ro * sin(z_theta);
+    x_[1] = z_ro * cos(z_theta);
+    return;
+  }
+
+  VectorXd z_pred = VectorXd(3);
+  z_pred << pxy_sqrt, atan2(py,px), (px * vx + py * vy) / pxy_sqrt;
+
+  VectorXd y = z - z_pred;
+
+  cout << "z:" << endl << z << endl << endl;
+  cout << "z_pred:" << endl << z_pred << endl << endl;
+  cout << "y:" << endl << y << endl << endl;
+
+  // Adjust angle representation to keep between -pi and pi.
+  double pi = 3.14159265358;
+  while(y[1] > pi) {
+    y[1] -= 2 * pi;
+  }
+  while(y[1] < -pi) {
+    y[1] += 2 * pi;
+  }
+
+  double c = (vx * py - vy * px) / pow(pxy,1.5);
+  H_ <<
+     px / pxy_sqrt, py / pxy_sqrt, 0, 0,
+     -py / pxy, px / pxy, 0, 0,
+     py * c, -px * c, px / pxy_sqrt, py / pxy_sqrt;
+
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd K = PHt * Si;
+
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
