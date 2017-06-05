@@ -86,14 +86,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double vy = ro_dot * cos(theta);
 
       ekf_.x_ << px, py, vx, vy;
-      cout << "Initializing with radar: " << ekf_.x_ << endl;
+      cout << "Initializing with radar: " << endl << ekf_.x_ << endl;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       double px = measurement_pack.raw_measurements_[0];
       double py = measurement_pack.raw_measurements_[1];
 
       ekf_.x_ << px, py, 0, 0;
-      cout << "Initializing with lidar: " << ekf_.x_ << endl;
+      cout << "Initializing with lidar: " << endl << ekf_.x_ << endl;
     }
 
     is_initialized_ = true;
@@ -121,10 +121,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   ekf_.Predict();
 
-  cout << "After prediction with t=" << dt << endl;
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
-  cout << endl;
+  //cout << "After prediction with t=" << dt << endl;
+  //cout << "x_ = " << ekf_.x_ << endl;
+  //cout << "P_ = " << ekf_.P_ << endl;
+  //cout << endl;
 
   /*****************************************************************************
    *  Update
@@ -132,13 +132,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // Radar updates
-    cout << "Updating with radar" << measurement_pack.raw_measurements_ << endl;
+    //cout << "Updating with radar" << measurement_pack.raw_measurements_ << endl;
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // Laser updates
-    cout << "Updating with lidar" << measurement_pack.raw_measurements_ << endl;
+    //cout << "Updating with lidar" << measurement_pack.raw_measurements_ << endl;
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
     ekf_.Update(measurement_pack.raw_measurements_);
@@ -147,7 +147,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   previous_timestamp_ = measurement_pack.timestamp_;
 
   // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
-  cout << endl;
+  //cout << "x_ = " << ekf_.x_ << endl;
+  //cout << "P_ = " << ekf_.P_ << endl;
+  //cout << endl;
 }

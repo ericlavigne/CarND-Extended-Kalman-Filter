@@ -39,9 +39,9 @@ void KalmanFilter::Update(const VectorXd &z) {
   MatrixXd PHt = P_ * Ht;
   MatrixXd K = PHt * Si;
 
-  cout << "z:" << endl << z << endl << endl;
-  cout << "z_pred:" << endl << z_pred << endl << endl;
-  cout << "y:" << endl << y << endl << endl;
+  //cout << "z:" << endl << z << endl << endl;
+  //cout << "z_pred:" << endl << z_pred << endl << endl;
+  //cout << "y:" << endl << y << endl << endl;
 
   x_ = x_ + (K * y);
   long x_size = x_.size();
@@ -79,9 +79,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   VectorXd y = z - z_pred;
 
-  cout << "z:" << endl << z << endl << endl;
-  cout << "z_pred:" << endl << z_pred << endl << endl;
-  cout << "y:" << endl << y << endl << endl;
+  //cout << "z:" << endl << z << endl << endl;
+  //cout << "z_pred:" << endl << z_pred << endl << endl;
+  //cout << "y:" << endl << y << endl << endl;
 
   // Adjust angle representation to keep between -pi and pi.
   double pi = 3.14159265358;
